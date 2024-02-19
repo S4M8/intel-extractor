@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Orbitron"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css"
+    />
+    <title>Intel Extractor</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="console">
+        <code>
+          <p>
+            “Cyberspace. A consensual hallucination experienced daily by
+            billions of legitimate operators, in every nation.” ― William
+            Gibson, Neuromancer
+          </p>
+        </code>
+      </div>
+    </div>
+    <div class="container">
+        <div class="login-box">
+          <form>
+            <div class="user-box">
+              <input type="text" id="username" name="" required="" />
+              <label>Username</label>
+            </div>
+            <div class="user-box">
+              <input type="password" id="password" name="" required="" />
+              <label>Password</label>
+            </div>
+            <button id="save-button">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              Run Puppeteer Script
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

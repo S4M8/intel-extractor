@@ -2,9 +2,9 @@
   "name": "intel-extractor",
   "version": "0.0.2",
   "description": "",
-  "main": "main.ts",
+  "main": "main.js",
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "electron ./src/electron/main.js"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +13,9 @@
     "puppeteer": "^22.0.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "electron": "^28.2.3",
+    "electron-packager": "^17.1.2"
   }
 }
