@@ -2,9 +2,10 @@
   "name": "intel-extractor",
   "version": "0.0.2",
   "description": "",
-  "main": "main.js",
+  "main": "./src/electron/main.js",
   "scripts": {
-    "start": "electron ./src/electron/main.js"
+    "start": "electron ./src/electron/main.js",
+    "package": "electron-packager . --platform=win32 --arch=x64"
   },
   "keywords": [],
   "author": "",
