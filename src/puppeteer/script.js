@@ -11,6 +11,7 @@ const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
 async function runPuppeteerScript(username, password) {
   const browser = await puppeteer.launch({
     headless: false,
+    executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
   });
   const page = await browser.newPage();
   await page.goto(url);
