@@ -1,8 +1,6 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
-import { email, password } from "./secret";
-import { Browser } from "puppeteer";
 
 puppeteer.use(StealthPlugin());
 
@@ -10,20 +8,15 @@ const url = "https://robertsspaceindustries.com/";
 const org = "THECODE";
 const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
 
-interface Card {
-  href: string;
-  name: string;
-  nickname: string;
-}
-
-const main = async () => {
+async function runPuppeteerScript(username, password) {
   const browser = await puppeteer.launch({
     headless: false,
+    executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
   });
   const page = await browser.newPage();
   await page.goto(url);
 
-  function delay(time: number): Promise<void> {
+  function delay(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
   }
 
@@ -46,7 +39,7 @@ const main = async () => {
 
   console.log("Enter credentials...");
   await page.locator("#email").click();
-  await page.type("#email", email);
+  await page.type("#email", username);
   await page.locator("#password").click();
   await page.type("#password", password);
   console.log("Signing in...");
@@ -74,11 +67,8 @@ const main = async () => {
   const cardData = [];
 
   async function scrollElementIntoView(
-    page: {
-      $: (arg0: any) => any;
-      viewport: () => { (): any; new (): any; height: number };
-    },
-    elementSelector: string
+    page,
+    elementSelector
   ) {
     try {
       const element = await page.$(elementSelector);
@@ -117,7 +107,7 @@ const main = async () => {
             })
           );
 
-          const card: Card = {
+          const card = {
             href,
             name: nameAndNickname.name,
             nickname: nameAndNickname.nickname,
@@ -131,7 +121,7 @@ const main = async () => {
     }
   }
 
-  async function writeDataToCSV(data: any[], filename: string) {
+  async function writeDataToCSV(data, filename) {
     const headers = Object.keys(data[0]);
     const csvRows = data.map((row) => {
       return headers.map((header) => row[header] || "").join(",");
@@ -202,6 +192,8 @@ const main = async () => {
   console.log("Scraped card data written to scraped_members.csv");
 
   await browser.close();
-};
+}
 
-main();
+module.exports = {
+  runPuppeteerScript
+}
