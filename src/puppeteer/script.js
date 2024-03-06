@@ -11,7 +11,8 @@ const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
 async function runPuppeteerScript(username, password) {
   const browser = await puppeteer.launch({
     headless: false,
-    executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+    executablePath:
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   });
   const page = await browser.newPage();
   await page.goto(url);
@@ -66,10 +67,7 @@ async function runPuppeteerScript(username, password) {
   const elementSelector = ".c-platform-copyright.c-platform-copyright--rsi";
   const cardData = [];
 
-  async function scrollElementIntoView(
-    page,
-    elementSelector
-  ) {
+  async function scrollElementIntoView(page, elementSelector) {
     try {
       const element = await page.$(elementSelector);
 
@@ -122,9 +120,17 @@ async function runPuppeteerScript(username, password) {
   }
 
   async function writeDataToCSV(data, filename) {
-    const headers = Object.keys(data[0]);
+    const headers = [
+      "href",
+      "name",
+      "nickname",
+      "mainOrg",
+      "altOrg",
+      "region",
+      "fluency",
+    ];
     const csvRows = data.map((row) => {
-      return headers.map((header) => row[header] || "").join(",");
+      return headers.map((fieldName) => `"${row[fieldName] || ""}"`).join(",");
     });
     const csvContent = [headers.join(",")].concat(csvRows).join("\n");
     fs.writeFileSync(filename, csvContent, "utf-8");
@@ -153,21 +159,41 @@ async function runPuppeteerScript(username, password) {
     try {
       await page.goto(href);
 
-      const mainOrg = await page.$eval(".info > p > a", (el) =>
-        el.textContent.trim()
-      );
+      let mainOrg = "";
+      let region = "";
+      let fluency = "";
+
+      try {
+        mainOrg = await page.$eval(".info > p > a", (el) =>
+          el.textContent.trim()
+        );
+      } catch (error) {
+        console.log("Main organization not found for", href);
+      }
+
       const altOrg = `${href}/organizations`;
 
-      const regionParts = await page.$$eval(
-        ".left-col > div > :nth-child(2) > strong",
-        (els) => els.map((el) => el.textContent.trim().replace(/\s+/g, ""))
+      const entries = await page.$$eval(".left-col .inner .entry", (entries) =>
+        entries.map((entry) => ({
+          label: entry.querySelector(".label")
+            ? entry.querySelector(".label").textContent.trim()
+            : "",
+          value: entry.querySelector(".value")
+            ? entry
+                .querySelector(".value")
+                .textContent.trim()
+                .replace(/\s+/g, " ")
+            : "",
+        }))
       );
-      const region = regionParts.join(", ");
 
-      const fluency = await page.$eval(
-        ".left-col > div > :nth-child(3) > strong",
-        (el) => el.textContent.trim()
-      );
+      entries.forEach((entry) => {
+        if (entry.label.includes("Location")) {
+          region = entry.value;
+        } else if (entry.label.includes("Fluency")) {
+          fluency = entry.value;
+        }
+      });
 
       cardData.mainOrg = mainOrg;
       cardData.altOrg = altOrg;
@@ -195,5 +221,5 @@ async function runPuppeteerScript(username, password) {
 }
 
 module.exports = {
-  runPuppeteerScript
-}
+  runPuppeteerScript,
+};
