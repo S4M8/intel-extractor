@@ -1,6 +1,8 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
+const parse = require("csv-parse/lib/sync");
+const stringify = require("csv-stringify/lib/sync");
 
 puppeteer.use(StealthPlugin());
 
@@ -211,11 +213,59 @@ async function runPuppeteerScript(username, password) {
 
   console.log("Updated cardData:", cardData);
 
-  if (cardData.length > 0) {
-    await writeDataToCSV(cardData, "scraped_members.csv");
+  function readExistingCSV(filePath) {
+    const csvData = fs.readFileSync(filePath, "utf8");
+    const records = parse(csvData, {
+      columns: true,
+      skip_empty_lines: true,
+    });
+    return records;
   }
 
-  console.log("Scraped card data written to scraped_members.csv");
+  function writeNewCSV(data, filePath) {
+    const csv = stringify(data, {
+      header: true,
+    });
+    fs.writeFileSync(filePath, csv);
+  }
+
+  function updateStatusAndReformat(existingCSVData, scrapedArray) {
+    // Create a lookup table from the scraped array using 'nickname' as the key
+    const scrapedLookup = new Map(
+      scrapedArray.map((item) => [item.nickname, item])
+    );
+
+    // Update the status for each entry in the existing CSV data and reformat
+    const updatedData = existingCSVData.map((item) => {
+      const scrapedItem = scrapedLookup.get(item.Handle);
+      return {
+        "#": item["#"],
+        Role: item["Role"],
+        Name: item["Name"],
+        Handle: item["Handle"],
+        Code: item["Code"],
+        "Main Org.": scrapedItem ? scrapedItem.mainOrg : item["Main Org."],
+        "Alt Org.": scrapedItem ? scrapedItem.altOrg : item["Alt Org."],
+        Status: scrapedItem ? "ACTIVE" : "INACTIVE",
+        Specturm: item["Specturm"],
+        Region: scrapedItem ? scrapedItem.region : item["Region"],
+        Fluency: scrapedItem ? scrapedItem.fluency : item["Fluency"],
+      };
+    });
+
+    return updatedData;
+  }
+
+  const existingCSVFilePath = "src/assets/existing.csv";
+  const newCSVFilePath = "src/assets/updated.csv";
+
+  const scrapedArray = cardData;
+
+  const existingCSVData = readExistingCSV(existingCSVFilePath);
+  const updatedData = updateStatusAndReformat(existingCSVData, scrapedArray);
+  console.log("Scrapped data reformatted to match existing csv...");
+  writeNewCSV(updatedData, newCSVFilePath);
+  console.log("Updated data written to ", newCSVFilePath);
 
   await browser.close();
 }
