@@ -23,7 +23,7 @@ This script is designed to automate the process of updating member information f
   - Initialization: The script initializes Puppeteer with the StealthPlugin and sets up necessary URLs and paths.
   - Browser Launch: Launches a Chromium browser instance with a specified executable path (e.g., Microsoft Edge).
   - Navigation and Login: Navigates to the Star Citizen website, handles modal dialogs, and logs in using th-e provided credentials.
-  - 2FA Handling: Waits for the user to manually input the 2FA code.
+  - 2FA Handling: Waits 20 seconds for the user to manually input the 2FA code.
   - Member Page Navigation: Navigates to the organization's member admin page.
   - Member Information Scraping: Scrolls through the member list, scraping information for each member and storing it in an array.
   - Data Processing: Processes the scraped member information, including visiting individual member pages for additional details.
@@ -31,7 +31,6 @@ This script is designed to automate the process of updating member information f
   - Cleanup: Closes the browser instance.
 
 ## Usage
-
   - Extract zip file 
   - Provide existing CSV to ./resources/app/src/assets/${existing.csv}
   - Run ./intel-extractor-win32-x64/intel-extractor.exe
