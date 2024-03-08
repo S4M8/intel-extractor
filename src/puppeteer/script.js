@@ -230,34 +230,51 @@ async function runPuppeteerScript(username, password) {
   }
 
   function updateStatusAndReformat(existingCSVData, scrapedArray) {
-    // Create a lookup table from the scraped array using 'nickname' as the key
     const scrapedLookup = new Map(
-      scrapedArray.map((item) => [item.nickname, item])
+      scrapedArray.map((item) => [item.name, item])
     );
 
-    // Update the status for each entry in the existing CSV data and reformat
-    const updatedData = existingCSVData.map((item) => {
-      const scrapedItem = scrapedLookup.get(item.Handle);
-      return {
-        "#": item["#"],
-        Role: item["Role"],
-        Name: item["Name"],
-        Handle: item["Handle"],
-        Code: item["Code"],
-        "Main Org.": scrapedItem ? scrapedItem.mainOrg : item["Main Org."],
-        "Alt Org.": scrapedItem ? scrapedItem.altOrg : item["Alt Org."],
-        Status: scrapedItem ? "ACTIVE" : "INACTIVE",
-        Specturm: item["Specturm"],
-        Region: scrapedItem ? scrapedItem.region : item["Region"],
-        Fluency: scrapedItem ? scrapedItem.fluency : item["Fluency"],
-      };
+    const existingLookup = new Map(
+      existingCSVData.map((item) => [item.Name, item])
+    );
+
+    scrapedArray.forEach((scrapedItem) => {
+      if (existingLookup.has(scrapedItem.name)) {
+        const existingItem = existingLookup.get(scrapedItem.name);
+        existingItem["Main Org."] =
+          scrapedItem.mainOrg || existingItem["Main Org."];
+        existingItem.Status = "ACTIVE";
+      } else {
+        // Append new member with incremented number and role of Agent
+        const newItem = {
+          "#": existingCSVData.length + 1,
+          Role: "Agent",
+          Name: scrapedItem.name,
+          Handle: scrapedItem.nickname,
+          Code: "",
+          "Main Org.": scrapedItem.mainOrg,
+          "Alt Org.": scrapedItem.altOrg,
+          Status: "ACTIVE",
+          Spectrum: "MSG",
+          Region: scrapedItem.region,
+          Fluency: scrapedItem.fluency,
+        };
+        existingCSVData.push(newItem);
+      }
     });
 
-    return updatedData;
+    // Mark members as INACTIVE if they exist only in the existing CSV data
+    existingCSVData.forEach((item) => {
+      if (!scrapedLookup.has(item.Name)) {
+        item.Status = "INACTIVE";
+      }
+    });
+
+    return existingCSVData;
   }
 
-  const existingCSVFilePath = "src/assets/existing.csv";
-  const newCSVFilePath = "src/assets/updated.csv";
+  const existingCSVFilePath = "TCW_Roster_v0.1_-_TCW_Roster.csv";
+  const newCSVFilePath = "updated_roster.csv";
 
   const scrapedArray = cardData;
 
