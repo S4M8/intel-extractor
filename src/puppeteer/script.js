@@ -273,7 +273,7 @@ async function runPuppeteerScript(username, password) {
     return existingCSVData;
   }
 
-  const existingCSVFilePath = "TCW_Roster_v0.1_-_TCW_Roster.csv";
+  const existingCSVFilePath = "src/assets/existing_roster.csv";
   const newCSVFilePath = "updated_roster.csv";
 
   const scrapedArray = cardData;
