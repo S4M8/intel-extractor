@@ -4,9 +4,11 @@
     <meta charset="UTF-8" />
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
+    http-equiv="Content-Security-Policy" 
+    content="default-src 'self'; 
+      script-src 'self'; 
+      font-src 'self' https://fonts.gstatic.com;
+      style-src 'self' https://fonts.googleapis.com">
     <meta
       http-equiv="X-Content-Security-Policy"
       content="default-src 'self'; script-src 'self'"
@@ -40,7 +42,7 @@
         <form>
           <div class="user-box">
             <input type="text" id="target-org" name="" required="" />
-            <label>::Target Org ID::</label>
+            <label>Target Org SID</label>
           </div>
           <button id="scan-button">
             <span></span>

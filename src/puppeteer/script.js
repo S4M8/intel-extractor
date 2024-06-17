@@ -1,8 +1,6 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
-const os = require('os');
-const path = require('path');
 const parse = require("csv-parse");
 const stringify = require("csv-stringify");
 
@@ -299,6 +297,7 @@ async function runRosterPuppeteerScript(username, password) {
 
   await browser.close();
 }
+
 async function runCuriousPuppeteerScript(targetOrg) {
   const orgUrl = `https://robertsspaceindustries.com/orgs/${targetOrg}/members`;
   const browser = await puppeteer.launch({
@@ -469,23 +468,34 @@ async function runCuriousPuppeteerScript(targetOrg) {
     await scrapeCitizenInfo(citizen.href, citizen);
   }
 
+  function convertRawDataToCSV(data) {
+    const headerMap = {
+      href: 'Dossier',
+      name: 'Name',
+      nickname: 'Nickname',
+      mainOrg: 'Main Org.',
+      altOrg: 'Alt Orgs.',
+      region: 'Region',
+      fluency: 'Fluency'
+    };
+  
+    const headers = Object.keys(data[0]).map(key => headerMap[key]).join(',');
+    const rows = data.map(row => {
+      return Object.values(row).map(value => `"${value}"`).join(',');
+    }).join('\n');
+    
+    return `${headers}\n${rows}`;
+  }
+
   console.log("Updated cardData:", cardData);
-
-  function writeNewCSV(data, filePath) {
-    const csv = stringify(data, {
-      header: true,
-    });
-    fs.writeFileSync(filePath, csv);
-  }
-
-  function getDownloadsFolderPath() {
-    const homeDir = os.homedir();
-    const downloadsDir = path.join(homeDir, 'Downloads');
-    return downloadsDir;
-  }
+  const csv = convertRawDataToCSV(cardData);
 
   await browser.close();
+
+  console.log(csv);
+  return csv;
 }
+
 module.exports = {
   runRosterPuppeteerScript,
   runCuriousPuppeteerScript

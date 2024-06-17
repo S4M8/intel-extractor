@@ -13,6 +13,11 @@ document.getElementById("admin-button").addEventListener("click", () => {
   ipcRenderer.send("login-submission", { username, password });
 });
 
+ipcRenderer.on('save-csv-reply', (event, response) => {
+  console.log(response); 
+  alert(response); 
+});
+
 // Note: Functions related to the typing-text effect.
 // var title = document.querySelector("p");
 // var CHAR_TIME = 30;
