@@ -3,8 +3,6 @@
 ## Overview
 This script is designed to automate the process of updating member information for a Star Citizen organization. It operates within an Electron application and targets the admin view of organization members on robertspaceindustries.com. The script utilizes Puppeteer, a Node.js library, to control a Chromium-based browser programmatically for scraping web content. Additionally, it employs the Puppeteer Extra plugin with StealthPlugin to enhance scraping capabilities by evading detection mechanisms on the website.
 
-![](./src/assets/demo-gif.gif)
-
 ## Dependencies
   - Puppeteer Extra: A version of Puppeteer that supports plugins.
   - Stealth Plugin: A plugin for Puppeteer Extra to make automation less detectable.
