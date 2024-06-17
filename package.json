@@ -1,22 +1,25 @@
 {
   "name": "intel-extractor",
-  "version": "0.0.2",
+  "version": "0.1.1",
   "description": "",
   "main": "./src/electron/main.js",
   "scripts": {
     "start": "electron ./src/electron/main.js",
-    "package": "electron-packager . --platform=win32 --arch=x64"
+    "package": "electron-packager . --platform=win32 --arch=x64",
+    "test":"node test.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "puppeteer": "^22.0.0",
+    "csv-parse": "^5.5.6",
+    "csv-stringify": "^6.5.0",
+    "puppeteer": "^22.11.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
-    "electron": "^28.2.3",
+    "electron": "^28.3.3",
     "electron-packager": "^17.1.2"
   }
 }
