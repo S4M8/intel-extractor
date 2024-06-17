@@ -30,7 +30,7 @@ This script is designed to automate the process of updating member information f
   - CSV Handling: Reads an existing CSV file for member data, updates it with the newly scraped information, and writes the updated data to a new CSV file.
   - Cleanup: Closes the browser instance.
 
-## Usage admin script
+## Usage: admin script
   - Extract zip file 
   - Provide existing CSV to ./resources/app/src/assets/${existing.csv}
   - Run ./intel-extractor-win32-x64/intel-extractor.exe
@@ -39,7 +39,7 @@ This script is designed to automate the process of updating member information f
   - Enter two factor authentication challenge
   - Review generated CSV, style as needed
 
-## Usage admin script
+## Usage: scan script
   - Run ./intel-extractor-win32-x64/intel-extractor.exe
   - Enter Organization SID
   - Select "_scan" button
