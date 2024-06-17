@@ -5,7 +5,8 @@
   "main": "./src/electron/main.js",
   "scripts": {
     "start": "electron ./src/electron/main.js",
-    "package": "electron-packager . --platform=win32 --arch=x64"
+    "package": "electron-packager . --platform=win32 --arch=x64",
+    "test":"node test.js"
   },
   "keywords": [],
   "author": "",

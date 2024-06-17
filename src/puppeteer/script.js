@@ -1,16 +1,17 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
-const parse = require("csv-parse/lib/sync");
-const stringify = require("csv-stringify/lib/sync");
+const os = require('os');
+const path = require('path');
+const parse = require("csv-parse");
+const stringify = require("csv-stringify");
 
 puppeteer.use(StealthPlugin());
 
-const url = "https://robertsspaceindustries.com/";
-const org = "THECODE";
-const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
-
-async function runPuppeteerScript(username, password) {
+async function runRosterPuppeteerScript(username, password) {
+  const url = "https://robertsspaceindustries.com/";
+  const org = "THECODE";
+  const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
   const browser = await puppeteer.launch({
     headless: false,
     executablePath:
@@ -213,6 +214,8 @@ async function runPuppeteerScript(username, password) {
 
   console.log("Updated cardData:", cardData);
 
+  const { parse } = require("csv-parse/sync");
+
   function readExistingCSV(filePath) {
     const csvData = fs.readFileSync(filePath, "utf8");
     const records = parse(csvData, {
@@ -221,6 +224,8 @@ async function runPuppeteerScript(username, password) {
     });
     return records;
   }
+
+  const { stringify } = require("csv-stringify/sync");
 
   function writeNewCSV(data, filePath) {
     const csv = stringify(data, {
@@ -273,20 +278,215 @@ async function runPuppeteerScript(username, password) {
     return existingCSVData;
   }
 
-  const existingCSVFilePath = "src/assets/existing_roster.csv";
-  const newCSVFilePath = "updated_roster.csv";
-
   const scrapedArray = cardData;
+  const existingCSVFilePath = "src/assets/existing_roster.csv";
+  const newCSVFilePath = "../../roster/updated_roster.csv";
 
   const existingCSVData = readExistingCSV(existingCSVFilePath);
   const updatedData = updateStatusAndReformat(existingCSVData, scrapedArray);
   console.log("Scrapped data reformatted to match existing csv...");
+
+  const rosterDirPath = path.join(__dirname, "..", "..", "roster");
+
+  if (!fs.existsSync(rosterDirPath)) {
+    fs.mkdir(rosterDirPath, { recursive: true });
+  } else {
+    console.log("Roster directory already exists.");
+  }
+
   writeNewCSV(updatedData, newCSVFilePath);
   console.log("Updated data written to ", newCSVFilePath);
 
   await browser.close();
 }
+async function runCuriousPuppeteerScript(targetOrg) {
+  const orgUrl = `https://robertsspaceindustries.com/orgs/${targetOrg}/members`;
+  const browser = await puppeteer.launch({
+    headless: false,
+    executablePath:
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  });
+  const page = await browser.newPage();
+  await page.goto(orgUrl);
 
+  function delay(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+  }
+
+  console.log("Navigating to members page...");
+  await page.goto(`${orgUrl}`);
+
+  await delay(2000);
+
+  const membersContainer = await page.$("#members-data");
+  const totalMembersElement = await page.$(".totalrows.js-totalrows");
+  const totalMembers = parseInt(
+    await totalMembersElement.evaluate((el) => el.textContent.trim()),
+    10
+  );
+  const elementSelector = ".c-platform-copyright.c-platform-copyright--rsi";
+  const cardData = [];
+
+  async function scrollElementIntoView(page, elementSelector) {
+    try {
+      const element = await page.$(elementSelector);
+
+      if (element) {
+        const rect = await element.boundingBox();
+        if (rect.top >= 0 && rect.bottom <= page.viewport().height) {
+          return;
+        }
+
+        await element.scrollIntoView({ block: "start", behavior: "smooth" });
+      } else {
+        console.warn(`Element with selector "${elementSelector}" not found.`);
+      }
+    } catch (error) {
+      console.error("Error scrolling element into view:", error.message);
+    }
+  }
+
+  async function scrapeNewCards() {
+    const newCards = await membersContainer.$$(".member-item");
+    console.log("Card Data Length: ", cardData.length);
+    console.log("Scraped Members: ", scrapedMembers.size);
+    for (const cardElement of newCards) {
+      try {
+        const href = await cardElement.$eval("a", (el) => el.href);
+        if (!scrapedMembers.has(href) && href) {
+          // Check if already scraped
+          scrapedMembers.add(href); // Add href to set for future checks
+
+          const nameAndNickname = await cardElement.$eval(
+            ".name-wrap",
+            (el) => ({
+              name: el.querySelector(".name").textContent,
+              nickname: el.querySelector(".nick").textContent,
+            })
+          );
+
+          const card = {
+            href,
+            name: nameAndNickname.name,
+            nickname: nameAndNickname.nickname,
+          };
+
+          cardData.push(card);
+        }
+      } catch (error) {
+        console.error(`Error scraping card: ${error.message}`);
+      }
+    }
+  }
+
+  async function writeDataToCSV(data, filename) {
+    const headers = [
+      "href",
+      "name",
+      "nickname",
+      "mainOrg",
+      "altOrg",
+      "region",
+      "fluency",
+    ];
+    const csvRows = data.map((row) => {
+      return headers.map((fieldName) => `"${row[fieldName] || ""}"`).join(",");
+    });
+    const csvContent = [headers.join(",")].concat(csvRows).join("\n");
+    fs.writeFileSync(filename, csvContent, "utf-8");
+  }
+
+  const scrapedMembers = new Set();
+
+  let pageLoads = totalMembers / 32;
+  console.log("scraping member page...");
+  for (let i = 0; i < pageLoads; i++) {
+    await scrollElementIntoView(page, elementSelector);
+    await delay(1000);
+    const loader =
+      (await page.$('.traj-loader.trans-02s[style="opacity: 0;"]')) !== null;
+    if (loader) {
+      console.log("Loader is present but inactive, likely all cards loaded");
+    }
+    await scrapeNewCards();
+  }
+
+  console.log("Scraped card data:", cardData);
+  console.log("Total members:", totalMembers);
+  console.log("Scraped card data length:", cardData.length);
+
+  async function scrapeCitizenInfo(href, cardData) {
+    try {
+      await page.goto(href);
+
+      let mainOrg = "";
+      let region = "";
+      let fluency = "";
+
+      try {
+        mainOrg = await page.$eval(".info > p > a", (el) =>
+          el.textContent.trim()
+        );
+      } catch (error) {
+        console.log("Main organization not found for", href);
+      }
+
+      const altOrg = `${href}/organizations`;
+
+      const entries = await page.$$eval(".left-col .inner .entry", (entries) =>
+        entries.map((entry) => ({
+          label: entry.querySelector(".label")
+            ? entry.querySelector(".label").textContent.trim()
+            : "",
+          value: entry.querySelector(".value")
+            ? entry
+                .querySelector(".value")
+                .textContent.trim()
+                .replace(/\s+/g, " ")
+            : "",
+        }))
+      );
+
+      entries.forEach((entry) => {
+        if (entry.label.includes("Location")) {
+          region = entry.value;
+        } else if (entry.label.includes("Fluency")) {
+          fluency = entry.value;
+        }
+      });
+
+      cardData.mainOrg = mainOrg;
+      cardData.altOrg = altOrg;
+      cardData.region = region;
+      cardData.fluency = fluency;
+    } catch (error) {
+      console.error(`Error scraping data for ${href}:`, error);
+    }
+  }
+
+  console.log("scraping citizen pages...");
+  for (const citizen of cardData) {
+    await scrapeCitizenInfo(citizen.href, citizen);
+  }
+
+  console.log("Updated cardData:", cardData);
+
+  function writeNewCSV(data, filePath) {
+    const csv = stringify(data, {
+      header: true,
+    });
+    fs.writeFileSync(filePath, csv);
+  }
+
+  function getDownloadsFolderPath() {
+    const homeDir = os.homedir();
+    const downloadsDir = path.join(homeDir, 'Downloads');
+    return downloadsDir;
+  }
+
+  await browser.close();
+}
 module.exports = {
-  runPuppeteerScript,
+  runRosterPuppeteerScript,
+  runCuriousPuppeteerScript
 };

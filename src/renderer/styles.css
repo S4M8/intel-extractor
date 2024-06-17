@@ -1,6 +1,16 @@
 body {
   color: #27f7f7;
   background: #111;
+  background-image: url(../assets/54.gif);
+  overflow-y: overlay;
+  overflow-x: hidden;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  font-family: Tahoma, Verdana, Segoe, 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', Meiryo, sans-serif;
+  font-size: 11px;
+  position: relative;
+  background-attachment: fixed;
 }
 
 .container {
@@ -48,7 +58,7 @@ button {
 
 form {
   color: #27f7f7;
-  background: #111;
+  /* background: #111; */
   font-family: "Orbitron", sans-serif;
   font-size: 100%;
   font-weight: normal;
