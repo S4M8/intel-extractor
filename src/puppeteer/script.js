@@ -93,8 +93,7 @@ async function runRosterPuppeteerScript(username, password, existingRosterCSVPat
     for (const cardElement of newCards) {
       try {
         const href = await cardElement.$eval("a", (el) => el.href);
-        if (!scrapedMembers.has(href) && href) {
-          // Check if already scraped
+        if (!scrapedMembers.has(href) && href) {// Check if already scraped
           scrapedMembers.add(href); // Add href to set for future checks
 
           const nameAndNickname = await cardElement.$eval(
