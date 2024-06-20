@@ -1,12 +1,11 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
-const parse = require("csv-parse");
-const stringify = require("csv-stringify");
 
 puppeteer.use(StealthPlugin());
 
-async function runRosterPuppeteerScript(username, password) {
+async function runRosterPuppeteerScript(username, password, existingRosterCSVPath) {
+  console.log(existingRosterCSVPath);
   const url = "https://robertsspaceindustries.com/";
   const org = "THECODE";
   const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
@@ -120,23 +119,6 @@ async function runRosterPuppeteerScript(username, password) {
     }
   }
 
-  async function writeDataToCSV(data, filename) {
-    const headers = [
-      "href",
-      "name",
-      "nickname",
-      "mainOrg",
-      "altOrg",
-      "region",
-      "fluency",
-    ];
-    const csvRows = data.map((row) => {
-      return headers.map((fieldName) => `"${row[fieldName] || ""}"`).join(",");
-    });
-    const csvContent = [headers.join(",")].concat(csvRows).join("\n");
-    fs.writeFileSync(filename, csvContent, "utf-8");
-  }
-
   const scrapedMembers = new Set();
 
   let pageLoads = totalMembers / 32;
@@ -223,15 +205,6 @@ async function runRosterPuppeteerScript(username, password) {
     return records;
   }
 
-  const { stringify } = require("csv-stringify/sync");
-
-  function writeNewCSV(data, filePath) {
-    const csv = stringify(data, {
-      header: true,
-    });
-    fs.writeFileSync(filePath, csv);
-  }
-
   function updateStatusAndReformat(existingCSVData, scrapedArray) {
     const scrapedLookup = new Map(
       scrapedArray.map((item) => [item.name, item])
@@ -266,7 +239,7 @@ async function runRosterPuppeteerScript(username, password) {
       }
     });
 
-    // Mark members as INACTIVE if they exist only in the existing CSV data
+    // Mark members as INACTIVE if they exist ONLY in the existing CSV data
     existingCSVData.forEach((item) => {
       if (!scrapedLookup.has(item.Name)) {
         item.Status = "INACTIVE";
@@ -277,31 +250,19 @@ async function runRosterPuppeteerScript(username, password) {
   }
 
   const scrapedArray = cardData;
-  const existingCSVFilePath = "src/assets/existing_roster.csv";
-  const newCSVFilePath = "../../roster/updated_roster.csv";
-
-  const existingCSVData = readExistingCSV(existingCSVFilePath);
-  const updatedData = updateStatusAndReformat(existingCSVData, scrapedArray);
+  const existingCSVData = readExistingCSV(existingRosterCSVPath);
+  const updatedCSV = updateStatusAndReformat(existingCSVData, scrapedArray);
   console.log("Scrapped data reformatted to match existing csv...");
 
-  const rosterDirPath = path.join(__dirname, "..", "..", "roster");
-
-  if (!fs.existsSync(rosterDirPath)) {
-    fs.mkdir(rosterDirPath, { recursive: true });
-  } else {
-    console.log("Roster directory already exists.");
-  }
-
-  writeNewCSV(updatedData, newCSVFilePath);
-  console.log("Updated data written to ", newCSVFilePath);
-
   await browser.close();
+
+  return updatedCSV;
 }
 
 async function runCuriousPuppeteerScript(targetOrg) {
   const orgUrl = `https://robertsspaceindustries.com/orgs/${targetOrg}/members`;
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     executablePath:
       "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   });
@@ -352,9 +313,8 @@ async function runCuriousPuppeteerScript(targetOrg) {
     for (const cardElement of newCards) {
       try {
         const href = await cardElement.$eval("a", (el) => el.href);
-        if (!scrapedMembers.has(href) && href) {
-          // Check if already scraped
-          scrapedMembers.add(href); // Add href to set for future checks
+        if (!scrapedMembers.has(href) && href) { // Check if the page has already been scraped.
+          scrapedMembers.add(href); // Add URL for future checks. 
 
           const nameAndNickname = await cardElement.$eval(
             ".name-wrap",

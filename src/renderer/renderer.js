@@ -2,21 +2,21 @@ const { ipcRenderer } = require("electron");
 
 document.getElementById("scan-button").addEventListener("click", () => {
   const targetOrg = document.getElementById("target-org").value;
-  console.log("Scan button clicked, targetOrg:", targetOrg); // Debugging log
   ipcRenderer.send("org-submission", { targetOrg });
 });
 
-document.getElementById("admin-button").addEventListener("click", () => {
+document.getElementById("admin-button").addEventListener("click", (event) => {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
-  console.log("Admin button clicked, username:", username); // Debugging log
-  ipcRenderer.send("login-submission", { username, password });
+  const filepath = document.getElementById("csv-input").files[0].path;
+  ipcRenderer.send("login-submission", { username, password, filepath });
 });
 
 ipcRenderer.on('save-csv-reply', (event, response) => {
   console.log(response); 
   alert(response); 
 });
+
 
 // Note: Functions related to the typing-text effect.
 // var title = document.querySelector("p");
