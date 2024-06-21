@@ -6,7 +6,7 @@ const { runRosterPuppeteerScript, runCuriousPuppeteerScript } = require("../pupp
 function createWindow() {
   const win = new BrowserWindow({
     width: 325,
-    height: 475,
+    height: 500,
     autoHideMenuBar: true,
     backgroundMaterial: "acrylic",
     webPreferences: {
@@ -33,8 +33,30 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.on("login-submission", async (event, { username, password }) => {
-  await runRosterPuppeteerScript(username, password);
+ipcMain.on("admin-submission", async (event, { username, password, filepath }) => {
+  try {
+    const csvData = await runRosterPuppeteerScript(username, password, filepath);
+
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+    const dateTimeStr = `${dateStr}-${timeStr}`;
+    const fileName = `roster-${dateTimeStr}.csv`;
+    const downloadsPath = path.join(os.homedir(), 'Downloads', fileName);
+
+    fs.writeFile(downloadsPath, csvData, 'utf8', (err) => {
+      if (err) {
+        console.error('Error writing CSV file:', err);
+        event.reply('save-csv-reply', 'Error saving file');
+      } else {
+        console.log('CSV file saved successfully to Downloads!');
+        event.reply('save-csv-reply', 'File saved successfully');
+      }
+    });
+  } catch (error) {
+    console.error('Error during processing:', error);
+    event.reply('save-csv-reply', 'Error processing data');
+  }
 });
 
 ipcMain.on("org-submission", async (event, { targetOrg }) => {
