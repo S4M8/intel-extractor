@@ -1,0 +1,23 @@
+CREATE TABLE citizens (
+    id SERIAL PRIMARY KEY,
+    url VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    handle VARCHAR(50),
+    main_org VARCHAR(100),
+    affiliation_1 VARCHAR(100),
+    affiliation_2 VARCHAR(100),
+    affiliation_3 VARCHAR(100),
+    affiliation_4 VARCHAR(100),
+    affiliation_5 VARCHAR(100),
+    affiliation_6 VARCHAR(100),
+    affiliation_7 VARCHAR(100),
+    affiliation_8 VARCHAR(100),
+    affiliation_9 VARCHAR(100),
+    country VARCHAR(50),
+    region VARCHAR(50),
+    fluency_1 VARCHAR(50),
+    fluency_2 VARCHAR(50),
+    fluency_3 VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

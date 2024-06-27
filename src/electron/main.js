@@ -3,6 +3,8 @@ const path = require("path");
 const fs = require('fs');
 const os = require('os');
 const { runRosterPuppeteerScript, runCuriousPuppeteerScript } = require("../puppeteer/script.js");
+const { initDatabase } = require('../database/database.js')
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 325,
@@ -32,6 +34,10 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+app.on('ready', async () => {
+  await initDatabase();
+})
 
 ipcMain.on("login-submission", async (event, { username, password }) => {
   await runRosterPuppeteerScript(username, password);

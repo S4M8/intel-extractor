@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron ./src/electron/main.js",
     "package": "electron-packager . --platform=win32 --arch=x64",
-    "test":"node test.js"
+    "test": "node test.js"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +16,9 @@
     "csv-stringify": "^6.5.0",
     "puppeteer": "^22.11.0",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "electron": "^28.3.3",
