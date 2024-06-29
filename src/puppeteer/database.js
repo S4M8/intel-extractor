@@ -1,7 +1,4 @@
 const { Sequelize, DataTypes, Op } = require('sequelize');
-const fs = require('fs');
-const path = require('path');
-
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: '../src/db/star_citizen_data.sqlite'
