@@ -105,7 +105,7 @@ async function getOrgMembersList(orgMembersEndpoint, orgSID, orgPages) {
   let page = 1;
   let nameList = [];
   
-  while (page < orgPages) {
+  while (page <= orgPages) {
     const memberRequest = await orgMemberRequest(orgMembersEndpoint, orgSID, page);
     const parsedMemberObject = JSON.parse(memberRequest);
     const htmlContent = parsedMemberObject.data.html;

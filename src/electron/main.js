@@ -2,15 +2,14 @@ const { app, BrowserWindow, ipcMain } = require("electron/main");
 const path = require("path");
 const fs = require('fs');
 const os = require('os');
-const { runRosterPuppeteerScript, runCuriousPuppeteerScript } = require("../puppeteer/script.js");
-const { initDatabase } = require('../database/database.js')
+const { runRosterPuppeteerScript, runCuriousPuppeteerScript } = require("../puppeteer/script");
+const { initDatabase } = require('../puppeteer/citizen');
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 325,
     height: 475,
     autoHideMenuBar: true,
-    backgroundMaterial: "acrylic",
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
@@ -35,9 +34,9 @@ app.on("window-all-closed", () => {
   }
 });
 
-app.on('ready', async () => {
-  await initDatabase();
-})
+// app.on('ready', async () => {
+//   await initDatabase();
+// })
 
 ipcMain.on("login-submission", async (event, { username, password }) => {
   await runRosterPuppeteerScript(username, password);
