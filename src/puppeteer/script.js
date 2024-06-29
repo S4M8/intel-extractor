@@ -2,6 +2,7 @@ const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
 const { getOrgAndPages, getOrgMembersList } = require("./requestHelpers");
+const { Citizen } = require("./citizen");
 
 puppeteer.use(StealthPlugin());
 
@@ -498,9 +499,130 @@ async function runRosterPuppeteerScript(username, password) {
 async function runCuriousPuppeteerScript(targetOrg) {
   const orgSID = targetOrg.toUpperCase().trim();
   const orgMembersEndpoint = `https://robertsspaceindustries.com/api/orgs/getOrgMembers?symbol=${orgSID}`;
-  const orgPages = await getOrgAndPages(orgMembersEndpoint, orgSID)
-  const membersList = await getOrgMembersList(orgMembersEndpoint, orgSID, orgPages);
-  console.log(membersList);
+  console.log(`Sending initial request for ${orgSID}.`);
+  console.log(`Target: ${orgMembersEndpoint}`);
+
+  try {
+    const orgPages = await getOrgAndPages(orgMembersEndpoint, orgSID);
+    const slugList = await getOrgMembersList(orgMembersEndpoint, orgSID, orgPages);
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    });
+
+    const page = await browser.newPage();
+
+    const csvHeader = [
+      "URL",
+      "Handle",
+      "Name",
+      "Main Org",
+      "Affiliation 1",
+      "Affiliation 2",
+      "Affiliation 3",
+      "Affiliation 4",
+      "Affiliation 5",
+      "Affiliation 6",
+      "Affiliation 7",
+      "Affiliation 8",
+      "Affiliation 9",
+      "Country",
+      "Region",
+      "Fluency 1",
+      "Fluency 2",
+      "Fluency 3"
+    ].join(',');
+
+    let csvData = csvHeader + '\n';
+
+    let i = 0, len = slugList.length;
+    while (i < len) {
+      slug = slugList[i];
+
+      const citizen = new Citizen();
+      citizen.URL = `https://robertsspaceindustries.com${slug}`;
+
+      await page.goto(citizen.URL, 'networkidle2');
+
+      citizen.Name = await page.$eval("#public-profile > div.profile-content.overview-content.clearfix > div.box-content.profile-wrapper.clearfix > div > div.profile.left-col > div > div.info > p:nth-child(1) > strong", (el) => el.textContent.trim());
+
+      citizen.Handle = await page.$eval("#public-profile > div.profile-content.overview-content.clearfix > div.box-content.profile-wrapper.clearfix > div > div.profile.left-col > div > div.info > p:nth-child(2) > strong", (el) => el.textContent.trim());
+
+      let locationRaw = '';
+      let fluencyRaw = '';
+
+      const entries = await page.$$eval(".left-col .inner .entry", (entries) =>
+        entries.map((entry) => ({
+          label: entry.querySelector(".label") ? entry.querySelector(".label").textContent.trim() : "",
+          value: entry.querySelector(".value") ? entry.querySelector(".value").textContent.trim().replace(/\s+/g, " ") : "",
+        }))
+      );
+
+      entries.forEach((entry) => {
+        if (entry.label.includes("Location")) {
+          locationRaw = entry.value;
+        } else if (entry.label.includes("Fluency")) {
+          fluencyRaw = entry.value;
+        }
+      });
+
+      function splitLocation(locationRaw) {
+        const parts = locationRaw.split(',').map(part => part.trim());
+        if (parts.length === 1) {
+          return { country: parts[0], region: '' };
+        } else {
+          return { country: parts[0], region: parts.slice(1).join(', ') };
+        }
+      }
+
+      const { country, region } = splitLocation(locationRaw);
+      citizen.Country = country;
+      citizen.Region = region;
+
+      const fluencies = fluencyRaw.split(',').map(f => f.trim());
+      fluencies.forEach(fluency => citizen.addFluency(fluency));
+
+      orgs = ` ${citizen.URL}/organizations`
+      await page.goto(orgs, 'networkidle2');
+      // Scrape affiliations
+      const affiliations = await page.$$eval('.box-content.org', (cards) => {
+        return cards.map(card => {
+          const isMain = card.classList.contains('main');
+          const orgName = card.querySelector('.info .entry a.value')?.textContent.trim() || '';
+          const orgSID = card.querySelector('.info .entry .value:not(a)')?.textContent.trim() || '';
+          const orgRank = card.querySelector('.info .entry:nth-child(3) .value')?.textContent.trim() || '';
+
+          // Only return the affiliation if at least one field is non-empty
+          if (orgName || orgSID || orgRank) {
+            return {
+              name: orgName,
+              sid: orgSID,
+              rank: orgRank,
+              isMain: isMain
+            };
+          }
+          return null;
+        }).filter(affiliation => affiliation !== null);
+      });
+
+      // Add affiliations to citizen object
+      affiliations.forEach(affiliation => {
+        if (affiliation.isMain) {
+          citizen.MainOrg = affiliation.name;
+        }
+        citizen.addAffiliation(affiliation);
+      });
+      csvData += citizen.toCSV() + '\n';
+      i++
+    }
+    await browser.close();
+    return csvData;
+  } catch (error) {
+    console.error('Error in runCuriousPuppeteerScript:', error);
+  }
+
+
 }
 
 module.exports = {

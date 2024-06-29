@@ -1,53 +1,59 @@
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 async function initialOrgRequest(url, sid) {
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    
-    const raw = JSON.stringify({
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+
+  const raw = JSON.stringify({
       "symbol": sid,
-      "search":"",
+      "search": "",
       "pagesize": 1,
       "page": 1
-    });
-    
-    const requestOptions = {
+  });
+
+  const requestOptions = {
       method: "POST",
       headers: headers,
       body: raw,
       redirect: "follow"
-    };
-    
-    const result = fetch(url, requestOptions)
-      .then((response) => response.text())
-      // .then((result) => console.log(result))
-      .catch((error) => console.error(error));
+  };
 
-    return result;
+  try {
+      const response = await fetch(url, requestOptions);
+      return await response.text();
+  } catch (error) {
+      console.error('Error in initialOrgRequest:', error);
+      throw error;
   }
+}
 
 async function orgMemberRequest(url, sid, page) {
-  const headers = new Headers()
+  const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  
-  const raw = JSON.stringify({
-    "symbol": sid,
-    "search":"",
-    "pagesize":32,
-    "page": page
-  });
-  
-  const requestOptions = {
-    method: "POST",
-    headers: headers,
-    body: raw,
-    redirect: "follow"
-  };
-  
-  const result = fetch(url, requestOptions)
-    .then((response) => response.text())
-    // .then((result) => console.log(result))
-    .catch((error) => console.error(error));
 
-  return result;
+  const raw = JSON.stringify({
+      "symbol": sid,
+      "search": "",
+      "pagesize": 32,
+      "page": page
+  });
+
+  const requestOptions = {
+      method: "POST",
+      headers: headers,
+      body: raw,
+      redirect: "follow"
+  };
+
+  try {
+      const response = await fetch(url, requestOptions);
+      return await response.text();
+  } catch (error) {
+      console.error('Error in orgMemberRequest:', error);
+      throw error;
+  }
 }
 
 function parseForCitizens(htmlString) {
@@ -60,10 +66,6 @@ function parseForCitizens(htmlString) {
   }
 
   return matches;
-}
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function getOrgAndPages(orgMembersEndpoint, orgSID) {
