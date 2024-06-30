@@ -1,14 +1,12 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const {
-  delay,
   getOrgMembersList,
   getOrgAndPages
 } = require('./helpers');
 const {
-  initDb,
+  closeDb,
   insertCitizen,
-  sequelize,
   exportToCsv
 } = require('./database');
 const { Citizen } = require("./citizen");
@@ -308,7 +306,6 @@ async function runRosterPuppeteerScript(username, password) {
 }
 
 async function runCuriousPuppeteerScript(targetOrg) {
-  await initDb();
 
   const orgSID = targetOrg.toUpperCase().trim();
   const orgMembersEndpoint = `https://robertsspaceindustries.com/api/orgs/getOrgMembers?symbol=${orgSID}`;
@@ -325,10 +322,13 @@ async function runCuriousPuppeteerScript(targetOrg) {
     });
 
     const page = await browser.newPage();
+    let scannedURLs = [];
 
     for (const slug of slugList) {
       const citizen = new Citizen();
       citizen.URL = `https://robertsspaceindustries.com${slug}`;
+
+      scannedURLs.push(citizen.URL);
 
       await page.goto(citizen.URL, 'networkidle2');
 
@@ -409,21 +409,19 @@ async function runCuriousPuppeteerScript(targetOrg) {
         Affiliations: citizen.Affiliations,
         Fluencies: citizen.Fluencies
       });
-
-      await delay(1000);
+      console.log("Data collection complete and stored in SQLite database.");
     }
 
     await browser.close();
-    const csvData = await exportToCsv(orgSID);
+    
+    const csvData = await exportToCsv(scannedURLs);
 
-    await sequelize.close();
+    return csvData;
 
-    console.log("Data collection complete and stored in SQLite database.");
-    return csvData; 
+
   } catch (error) {
-    console.error('Error in runCuriousPuppeteerScript:', error);
-    await sequelize.close();
-    throw error; 
+      console.error('Error in runCuriousPuppeteerScript:', error);
+      throw error;
   }
 }
 

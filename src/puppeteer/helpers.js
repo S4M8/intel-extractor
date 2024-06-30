@@ -110,7 +110,7 @@ async function getOrgMembersList(orgMembersEndpoint, orgSID, orgPages) {
     const parsedMemberObject = JSON.parse(memberRequest);
     const htmlContent = parsedMemberObject.data.html;
     const matches = parseForCitizens(htmlContent);
-    await delay(1000);
+    await delay(650);
     page += 1;
     nameList = [...nameList, ...matches];    
   }

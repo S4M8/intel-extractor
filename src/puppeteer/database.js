@@ -1,7 +1,8 @@
-const { Sequelize, DataTypes, Op } = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize');
+
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: '../src/db/star_citizen_data.sqlite'
+  storage: './src/puppeteer/database/citizens.sqlite'
 });
 
 const Citizen = sequelize.define('Citizen', {
@@ -29,35 +30,48 @@ Citizen.hasMany(Fluency);
 Affiliation.belongsTo(Citizen);
 Fluency.belongsTo(Citizen);
 
-async function initDb() {
-  await sequelize.sync();
-}
+async function initializeDatabase() {
+    try {
+      await sequelize.authenticate();
+      await sequelize.sync();
+      console.log('Database initialized');
+    } catch (error) {
+      console.error('Unable to initialize the database:', error);
+      throw error;
+    }
+  }
+  
+  async function closeDatabase() {
+    try {
+      await sequelize.close();
+      console.log('Database connection closed');
+    } catch (error) {
+      console.error('Error closing the database connection:', error);
+      throw error;
+    }
+  }
 
-async function insertCitizen(citizenData) {
-    const [citizen, created] = await Citizen.findOrCreate({
-      where: { handle: citizenData.handle },
-      defaults: citizenData
-    });
+  async function insertCitizen(citizenData) {
+    // Check if a citizen with the same URL already exists
+    let citizen = await Citizen.findOne({ where: { url: citizenData.url } });
   
-    if (!created) {
-      // Update existing citizen data
-      await citizen.update(citizenData);
-    }
+    if (!citizen) {
+      // If citizen does not exist, create a new one
+      citizen = await Citizen.create(citizenData);
   
-    // Remove existing affiliations and fluencies
-    await Affiliation.destroy({ where: { CitizenId: citizen.id } });
-    await Fluency.destroy({ where: { CitizenId: citizen.id } });
+      // Create affiliations if provided
+      if (citizenData.Affiliations) {
+        await Affiliation.bulkCreate(
+          citizenData.Affiliations.map(aff => ({ ...aff, CitizenId: citizen.id }))
+        );
+      }
   
-    // Add new affiliations and fluencies
-    if (citizenData.Affiliations) {
-      await Affiliation.bulkCreate(
-        citizenData.Affiliations.map(aff => ({ ...aff, CitizenId: citizen.id }))
-      );
-    }
-    if (citizenData.Fluencies) {
-      await Fluency.bulkCreate(
-        citizenData.Fluencies.map(lang => ({ language: lang, CitizenId: citizen.id }))
-      );
+      // Create fluencies if provided
+      if (citizenData.Fluencies) {
+        await Fluency.bulkCreate(
+          citizenData.Fluencies.map(lang => ({ language: lang, CitizenId: citizen.id }))
+        );
+      }
     }
   
     return citizen;
@@ -75,42 +89,23 @@ async function getAllCitizens() {
   });
 }
 
-async function exportToCsv(orgSID) {
+async function exportToCsv(scannedUrls) {
     const citizens = await Citizen.findAll({
-      include: [
-        {
-          model: Affiliation,
-          where: {
-            [Op.or]: [
-              { sid: orgSID },
-              { name: orgSID }
-            ]
-          },
-          required: true
-        },
-        {
-          model: Fluency
-        }
-      ],
-      group: ['Citizen.id']
+      include: [Affiliation, Fluency],
+      where: {
+        url: scannedUrls // Only include citizens scanned in the current run
+      }
     });
-  
+
     let csvData = [
       "URL,Handle,Name,Main Org,Affiliation 1,Affiliation 2,Affiliation 3,Affiliation 4,Affiliation 5,Affiliation 6,Affiliation 7,Affiliation 8,Affiliation 9,Country,Region,Fluency 1,Fluency 2,Fluency 3"
     ];
   
-    const processedHandles = new Set();
-  
     for (const citizen of citizens) {
-      if (processedHandles.has(citizen.handle)) continue;
-      processedHandles.add(citizen.handle);
-  
-      // Ensure affiliations are correctly loaded
-      await citizen.reload({ include: [Affiliation, Fluency] });
-  
+        console.log(citizen)
       const affiliations = Array(9).fill('').map((_, i) => {
         const aff = citizen.Affiliations[i];
-        return aff ? `${aff.name}|${aff.sid}|${aff.rank}` : '';
+        return aff ? `${aff.name},${aff.sid}` : '';
       });
   
       const fluencies = Array(3).fill('').map((_, i) => {
@@ -133,15 +128,15 @@ async function exportToCsv(orgSID) {
   
     return csvData.join('\n');
   }
-  
-  module.exports = {
-    sequelize,
-    Citizen,
-    Affiliation,
-    Fluency,
-    initDb,
-    insertCitizen,
-    getCitizen,
-    getAllCitizens,
-    exportToCsv
-  };
+
+module.exports = {
+  Citizen,
+  Affiliation,
+  Fluency,
+  initializeDatabase,
+  closeDatabase,
+  insertCitizen,
+  getCitizen,
+  getAllCitizens,
+  exportToCsv
+};
