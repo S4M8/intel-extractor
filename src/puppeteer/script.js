@@ -5,7 +5,6 @@ const {
   getOrgAndPages
 } = require('./helpers');
 const {
-  closeDb,
   insertCitizen,
   exportToCsv
 } = require('./database');
@@ -333,7 +332,7 @@ async function runCuriousPuppeteerScript(targetOrg) {
 
       const orgs = `${citizen.URL}/organizations`;
       await page.goto(orgs, 'networkidle2');
-      
+
       const affiliations = await page.$$eval('.box-content.org', (cards) => {
         return cards.map(card => {
           const isMain = card.classList.contains('main');
@@ -360,7 +359,7 @@ async function runCuriousPuppeteerScript(targetOrg) {
         citizen.addAffiliation(affiliation);
       });
 
-      console.log("CITIZEN",citizen);
+      console.log("CITIZEN", citizen);
       await insertCitizen({
         url: citizen.URL,
         handle: citizen.Handle,
@@ -375,15 +374,15 @@ async function runCuriousPuppeteerScript(targetOrg) {
     }
 
     await browser.close();
-    
+
     const csvData = await exportToCsv(scannedURLs);
 
     return csvData;
 
 
   } catch (error) {
-      console.error('Error in runCuriousPuppeteerScript:', error);
-      throw error;
+    console.error('Error in runCuriousPuppeteerScript:', error);
+    throw error;
   }
 }
 

@@ -36,13 +36,13 @@ body {
   border: 2px #03e9f4;
 }
 
-#csv-input ~ label {
+#csv-input~label {
   margin-top: 0.75em;
   top: -30px;
 }
 
-#csv-input:focus ~ label,
-#csv-input:valid ~ label {
+#csv-input:focus~label,
+#csv-input:valid~label {
   left: 0;
   color: #03e9f4;
   font-size: 14px;
@@ -102,8 +102,8 @@ form {
   transition: .5s;
 }
 
-.login-box .user-box input:focus ~ label,
-.login-box .user-box input:valid ~ label {
+.login-box .user-box input:focus~label,
+.login-box .user-box input:valid~label {
   top: -30px;
   left: 0;
   color: #03e9f4;
@@ -129,9 +129,9 @@ form {
   color: #fff;
   border-radius: 5px;
   box-shadow: 0 0 5px #B3E5FC,
-              0 0 25px #03e9f4,
-              0 0 50px #03e9f4,
-              0 0 100px #B3E5FC;
+    0 0 25px #03e9f4,
+    0 0 50px #03e9f4,
+    0 0 100px #B3E5FC;
 }
 
 .login-box a span {

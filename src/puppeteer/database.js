@@ -31,51 +31,51 @@ Affiliation.belongsTo(Citizen);
 Fluency.belongsTo(Citizen);
 
 async function initializeDatabase() {
-    try {
-      await sequelize.authenticate();
-      await sequelize.sync();
-      console.log('Database initialized');
-    } catch (error) {
-      console.error('Unable to initialize the database:', error);
-      throw error;
-    }
+  try {
+    await sequelize.authenticate();
+    await sequelize.sync();
+    console.log('Database initialized');
+  } catch (error) {
+    console.error('Unable to initialize the database:', error);
+    throw error;
   }
-  
-  async function closeDatabase() {
-    try {
-      await sequelize.close();
-      console.log('Database connection closed');
-    } catch (error) {
-      console.error('Error closing the database connection:', error);
-      throw error;
+}
+
+async function closeDatabase() {
+  try {
+    await sequelize.close();
+    console.log('Database connection closed');
+  } catch (error) {
+    console.error('Error closing the database connection:', error);
+    throw error;
+  }
+}
+
+async function insertCitizen(citizenData) {
+  // Check if a citizen with the same URL already exists
+  let citizen = await Citizen.findOne({ where: { url: citizenData.url } });
+
+  if (!citizen) {
+    // If citizen does not exist, create a new one
+    citizen = await Citizen.create(citizenData);
+
+    // Create affiliations if provided
+    if (citizenData.Affiliations) {
+      await Affiliation.bulkCreate(
+        citizenData.Affiliations.map(aff => ({ ...aff, CitizenId: citizen.id }))
+      );
+    }
+
+    // Create fluencies if provided
+    if (citizenData.Fluencies) {
+      await Fluency.bulkCreate(
+        citizenData.Fluencies.map(lang => ({ language: lang, CitizenId: citizen.id }))
+      );
     }
   }
 
-  async function insertCitizen(citizenData) {
-    // Check if a citizen with the same URL already exists
-    let citizen = await Citizen.findOne({ where: { url: citizenData.url } });
-  
-    if (!citizen) {
-      // If citizen does not exist, create a new one
-      citizen = await Citizen.create(citizenData);
-  
-      // Create affiliations if provided
-      if (citizenData.Affiliations) {
-        await Affiliation.bulkCreate(
-          citizenData.Affiliations.map(aff => ({ ...aff, CitizenId: citizen.id }))
-        );
-      }
-  
-      // Create fluencies if provided
-      if (citizenData.Fluencies) {
-        await Fluency.bulkCreate(
-          citizenData.Fluencies.map(lang => ({ language: lang, CitizenId: citizen.id }))
-        );
-      }
-    }
-  
-    return citizen;
-  }
+  return citizen;
+}
 
 async function getCitizen(id) {
   return Citizen.findByPk(id, {
@@ -90,44 +90,44 @@ async function getAllCitizens() {
 }
 
 async function exportToCsv(scannedUrls) {
-    const citizens = await Citizen.findAll({
-      include: [Affiliation, Fluency],
-      where: {
-        url: scannedUrls // Only include citizens scanned in the current run
-      }
+  const citizens = await Citizen.findAll({
+    include: [Affiliation, Fluency],
+    where: {
+      url: scannedUrls // Only include citizens scanned in the current run
+    }
+  });
+
+  let csvData = [
+    "URL,Handle,Name,Main Org,Affiliation 1,Affiliation 2,Affiliation 3,Affiliation 4,Affiliation 5,Affiliation 6,Affiliation 7,Affiliation 8,Affiliation 9,Country,Region,Fluency 1,Fluency 2,Fluency 3"
+  ];
+
+  for (const citizen of citizens) {
+    console.log(citizen)
+    const affiliations = Array(9).fill('').map((_, i) => {
+      const aff = citizen.Affiliations[i];
+      return aff ? `${aff.name},${aff.sid}` : '';
     });
 
-    let csvData = [
-      "URL,Handle,Name,Main Org,Affiliation 1,Affiliation 2,Affiliation 3,Affiliation 4,Affiliation 5,Affiliation 6,Affiliation 7,Affiliation 8,Affiliation 9,Country,Region,Fluency 1,Fluency 2,Fluency 3"
-    ];
-  
-    for (const citizen of citizens) {
-        console.log(citizen)
-      const affiliations = Array(9).fill('').map((_, i) => {
-        const aff = citizen.Affiliations[i];
-        return aff ? `${aff.name},${aff.sid}` : '';
-      });
-  
-      const fluencies = Array(3).fill('').map((_, i) => {
-        return citizen.Fluencies[i] ? citizen.Fluencies[i].language : '';
-      });
-  
-      const row = [
-        citizen.url,
-        citizen.handle,
-        citizen.name,
-        citizen.mainOrg,
-        ...affiliations,
-        citizen.country,
-        citizen.region,
-        ...fluencies
-      ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
-  
-      csvData.push(row);
-    }
-  
-    return csvData.join('\n');
+    const fluencies = Array(3).fill('').map((_, i) => {
+      return citizen.Fluencies[i] ? citizen.Fluencies[i].language : '';
+    });
+
+    const row = [
+      citizen.url,
+      citizen.handle,
+      citizen.name,
+      citizen.mainOrg,
+      ...affiliations,
+      citizen.country,
+      citizen.region,
+      ...fluencies
+    ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
+
+    csvData.push(row);
   }
+
+  return csvData.join('\n');
+}
 
 module.exports = {
   Citizen,

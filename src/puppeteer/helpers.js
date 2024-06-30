@@ -7,25 +7,25 @@ async function initialOrgRequest(url, sid) {
   headers.append("Content-Type", "application/json");
 
   const raw = JSON.stringify({
-      "symbol": sid,
-      "search": "",
-      "pagesize": 1,
-      "page": 1
+    "symbol": sid,
+    "search": "",
+    "pagesize": 1,
+    "page": 1
   });
 
   const requestOptions = {
-      method: "POST",
-      headers: headers,
-      body: raw,
-      redirect: "follow"
+    method: "POST",
+    headers: headers,
+    body: raw,
+    redirect: "follow"
   };
 
   try {
-      const response = await fetch(url, requestOptions);
-      return await response.text();
+    const response = await fetch(url, requestOptions);
+    return await response.text();
   } catch (error) {
-      console.error('Error in initialOrgRequest:', error);
-      throw error;
+    console.error('Error in initialOrgRequest:', error);
+    throw error;
   }
 }
 
@@ -34,25 +34,25 @@ async function orgMemberRequest(url, sid, page) {
   headers.append("Content-Type", "application/json");
 
   const raw = JSON.stringify({
-      "symbol": sid,
-      "search": "",
-      "pagesize": 32,
-      "page": page
+    "symbol": sid,
+    "search": "",
+    "pagesize": 32,
+    "page": page
   });
 
   const requestOptions = {
-      method: "POST",
-      headers: headers,
-      body: raw,
-      redirect: "follow"
+    method: "POST",
+    headers: headers,
+    body: raw,
+    redirect: "follow"
   };
 
   try {
-      const response = await fetch(url, requestOptions);
-      return await response.text();
+    const response = await fetch(url, requestOptions);
+    return await response.text();
   } catch (error) {
-      console.error('Error in orgMemberRequest:', error);
-      throw error;
+    console.error('Error in orgMemberRequest:', error);
+    throw error;
   }
 }
 
@@ -104,25 +104,25 @@ async function getOrgAndPages(orgMembersEndpoint, orgSID) {
 async function getOrgMembersList(orgMembersEndpoint, orgSID, orgPages) {
   let page = 1;
   let nameList = [];
-  
+
   while (page <= orgPages) {
     const memberRequest = await orgMemberRequest(orgMembersEndpoint, orgSID, page);
     const parsedMemberObject = JSON.parse(memberRequest);
     const htmlContent = parsedMemberObject.data.html;
     const matches = parseForCitizens(htmlContent);
-    await delay(650);
+    await delay(650); // delay lower than this resulted in rate limiting...
     page += 1;
-    nameList = [...nameList, ...matches];    
+    nameList = [...nameList, ...matches];
   }
-  
+
   return nameList;
 }
 
-  module.exports = {
-    delay,
-    getOrgMembersList,
-    getOrgAndPages,
-    initialOrgRequest,
-    orgMemberRequest,
-    parseForCitizens
-  };
+module.exports = {
+  delay,
+  getOrgMembersList,
+  getOrgAndPages,
+  initialOrgRequest,
+  orgMemberRequest,
+  parseForCitizens
+};

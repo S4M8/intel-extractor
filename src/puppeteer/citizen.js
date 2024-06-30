@@ -59,4 +59,4 @@ class Citizen {
     }
 }
 
- module.exports = { Citizen };
+module.exports = { Citizen };

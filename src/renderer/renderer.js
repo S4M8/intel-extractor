@@ -6,8 +6,8 @@ document.getElementById("scan-button").addEventListener("click", () => {
 });
 
 document.getElementById("admin-button").addEventListener("click", (event) => {
-  event.preventDefault();  
-  
+  event.preventDefault();
+
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
   const fileInput = document.getElementById("csv-input");
@@ -22,6 +22,6 @@ document.getElementById("admin-button").addEventListener("click", (event) => {
 });
 
 ipcRenderer.on('save-csv-reply', (event, response) => {
-  console.log(response); 
-  alert(response); 
+  console.log(response);
+  alert(response);
 });
