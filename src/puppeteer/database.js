@@ -93,7 +93,7 @@ async function exportToCsv(scannedUrls) {
   const citizens = await Citizen.findAll({
     include: [Affiliation, Fluency],
     where: {
-      url: scannedUrls // Only include citizens scanned in the current run
+      url: scannedUrls
     }
   });
 
@@ -102,11 +102,19 @@ async function exportToCsv(scannedUrls) {
   ];
 
   for (const citizen of citizens) {
-    console.log(citizen)
-    const affiliations = Array(9).fill('').map((_, i) => {
-      const aff = citizen.Affiliations[i];
-      return aff ? `${aff.name},${aff.sid}` : '';
-    });
+    let mainOrg = citizen.mainOrg;
+    let affiliations = [];
+    for (const aff of citizen.Affiliations) {
+      if (aff && aff.name === mainOrg) {
+        mainOrg = aff.sid;
+      } else {
+        affiliations.push(aff ? `${aff.sid}` : '');
+      }
+    }
+
+    while (affiliations.length < 9) {
+      affiliations.push('');
+    }
 
     const fluencies = Array(3).fill('').map((_, i) => {
       return citizen.Fluencies[i] ? citizen.Fluencies[i].language : '';
@@ -116,7 +124,7 @@ async function exportToCsv(scannedUrls) {
       citizen.url,
       citizen.handle,
       citizen.name,
-      citizen.mainOrg,
+      mainOrg, 
       ...affiliations,
       citizen.country,
       citizen.region,

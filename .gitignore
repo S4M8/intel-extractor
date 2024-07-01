@@ -2,6 +2,12 @@
 intel-extractor-win32-x64
 intel-extractor-win32-x64.zip
 
+# Existing Roster
+existing_roster.csv
+
+# Generated Database
+../src/puppeteer/database/*
+
 # Logs
 logs
 *.log
