@@ -2,13 +2,14 @@ const { app, BrowserWindow, ipcMain } = require("electron/main");
 const path = require("path");
 const fs = require('fs');
 const os = require('os');
-const { runRosterPuppeteerScript, runCuriousPuppeteerScript } = require("../puppeteer/script.js");
+const { runRosterPuppeteerScript, runCuriousPuppeteerScript } = require("../puppeteer/script");
+const { initializeDatabase, closeDatabase } = require("../puppeteer/database");
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 325,
     height: 500,
     autoHideMenuBar: true,
-    backgroundMaterial: "acrylic",
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
@@ -19,18 +20,24 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "../renderer/index.html"));
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  await initializeDatabase();
+  createWindow();
 
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+})
+
+app.on('window-all-closed', async () => {
+  if (process.platform !== 'darwin') {
+    await closeDatabase();
+    app.quit();
   }
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+app.on('before-quit', async () => {
+  await closeDatabase();
 });
 
 ipcMain.on("admin-submission", async (event, { username, password, filepath }) => {
