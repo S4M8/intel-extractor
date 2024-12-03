@@ -8,6 +8,7 @@ class Citizen {
         this.Country = data.Country || '';
         this.Region = data.Region || '';
         this.Fluencies = data.Fluencies || [];
+        this.CitizenRecord = data.CitizenRecord || '';
     }
 
     addAffiliation(affiliation) {
@@ -54,6 +55,7 @@ class Citizen {
             ...affiliations,
             this.Country,
             this.Region,
+            this.CitizenRecord, 
             ...fluencies
         ].map(field => `"${field.replace(/"/g, '""')}"`).join(',');
     }

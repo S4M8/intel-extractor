@@ -295,6 +295,8 @@ async function runCuriousPuppeteerScript(targetOrg) {
 
       citizen.Name = await page.$eval("#public-profile > div.profile-content.overview-content.clearfix > div.box-content.profile-wrapper.clearfix > div > div.profile.left-col > div > div.info > p:nth-child(1) > strong", (el) => el.textContent.trim());
       citizen.Handle = await page.$eval("#public-profile > div.profile-content.overview-content.clearfix > div.box-content.profile-wrapper.clearfix > div > div.profile.left-col > div > div.info > p:nth-child(2) > strong", (el) => el.textContent.trim());
+      citizen.CitizenRecord = await page.$eval("#public-profile > div.profile-content.overview-content.clearfix > p > strong", (el) => el.textContent.trim().replace(/^#/, ''));
+
 
       let locationRaw = '';
       let fluencyRaw = '';
@@ -360,6 +362,7 @@ async function runCuriousPuppeteerScript(targetOrg) {
       });
 
       console.log("CITIZEN", citizen);
+
       await insertCitizen({
         url: citizen.URL,
         handle: citizen.Handle,
@@ -367,6 +370,7 @@ async function runCuriousPuppeteerScript(targetOrg) {
         mainOrg: citizen.MainOrg,
         country: citizen.Country,
         region: citizen.Region,
+        citizenRecord: citizen.CitizenRecord,
         Affiliations: citizen.Affiliations,
         Fluencies: citizen.Fluencies
       });
