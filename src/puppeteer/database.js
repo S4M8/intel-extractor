@@ -11,7 +11,8 @@ const Citizen = sequelize.define('Citizen', {
   name: DataTypes.STRING,
   mainOrg: DataTypes.STRING,
   country: DataTypes.STRING,
-  region: DataTypes.STRING
+  region: DataTypes.STRING,
+  citizenRecord: DataTypes.STRING
 });
 
 const Affiliation = sequelize.define('Affiliation', {
@@ -98,17 +99,19 @@ async function exportToCsv(scannedUrls) {
   });
 
   let csvData = [
-    "URL,Handle,Name,Main Org,Affiliation 1,Affiliation 2,Affiliation 3,Affiliation 4,Affiliation 5,Affiliation 6,Affiliation 7,Affiliation 8,Affiliation 9,Country,Region,Fluency 1,Fluency 2,Fluency 3"
+    "URL,Handle,Name,Main Org,Affiliation 1,Affiliation 2,Affiliation 3,Affiliation 4,Affiliation 5,Affiliation 6,Affiliation 7,Affiliation 8,Affiliation 9,Country,Region,Citizen Record,Fluency 1,Fluency 2,Fluency 3"
   ];
 
   for (const citizen of citizens) {
-    let mainOrg = citizen.mainOrg;
+    let mainOrgSID = citizen.mainOrg;
     let affiliations = [];
     for (const aff of citizen.Affiliations) {
-      if (aff && aff.name === mainOrg) {
-        mainOrg = aff.sid;
-      } else {
-        affiliations.push(aff ? `${aff.sid}` : '');
+      if (aff) {
+        if (aff.name === mainOrgSID) {
+          mainOrgSID = aff.sid;
+        } else {
+          affiliations.push(`${aff.sid}`);
+        }
       }
     }
 
@@ -124,10 +127,11 @@ async function exportToCsv(scannedUrls) {
       citizen.url,
       citizen.handle,
       citizen.name,
-      mainOrg, 
+      mainOrgSID, 
       ...affiliations,
       citizen.country,
       citizen.region,
+      citizen.citizenRecord || '', 
       ...fluencies
     ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
 
