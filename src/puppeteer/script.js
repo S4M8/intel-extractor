@@ -9,8 +9,25 @@ const {
   exportToCsv
 } = require('./database');
 const { Citizen } = require("./citizen");
+const os = require('os');
+const path = require('path');
 
 puppeteer.use(StealthPlugin());
+
+function getBrowserExcutablePath() {
+  const platform = os.platform();
+  
+  switch (platform) {
+    case 'win32':
+      return "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+    case 'linux':
+      return "/usr/bin/firefox";
+    case 'darwin':
+      return "/Applications/Firefox.app/Contents/MacOS/firefox";
+    default:
+      throw new Error(`Unsupported operating system: ${platform}`);
+  }
+} 
 
 async function runRosterPuppeteerScript(username, password, existingRosterCSVPath) {
   console.log(existingRosterCSVPath);
@@ -19,8 +36,7 @@ async function runRosterPuppeteerScript(username, password, existingRosterCSVPat
   const orgUrl = `https://robertsspaceindustries.com/orgs/${org}/admin/members`;
   const browser = await puppeteer.launch({
     headless: false,
-    executablePath:
-      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    executablePath: getBrowserExecutablePath(),
   });
   const page = await browser.newPage();
   await page.goto(url);
@@ -279,7 +295,7 @@ async function runCuriousPuppeteerScript(targetOrg) {
 
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      executablePath: getBrowserExcutablePath(),
     });
 
     const page = await browser.newPage();
